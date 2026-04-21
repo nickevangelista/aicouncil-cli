@@ -39,7 +39,7 @@ gh auth login
 ### 2. Compilar o ai-council
 
 ```bash
-git clone https://github.com/seu-usuario/ai-council
+git clone https://github.com/nickevangelista/aicouncil-cli
 cd ai-council
 
 # Baixa as dependências
