@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/seu-usuario/ai-council/internal"
+	"github.com/nickevangelista/aicouncil-cli/internal"
 	"github.com/spf13/cobra"
 )
 

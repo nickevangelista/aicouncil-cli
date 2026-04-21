@@ -1,4 +1,4 @@
-module github.com/nickevangelista/ai-council
+module github.com/nickevangelista/aicouncil-cli
 
 go 1.22
 
