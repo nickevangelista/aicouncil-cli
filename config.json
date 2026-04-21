@@ -1,0 +1,26 @@
+{
+  "agents": [
+    {
+      "name": "Gemini",
+      "command": "gemini",
+      "args": ["-p", "{prompt}"],
+      "timeout_seconds": 90,
+      "use_stdin": false,
+      "_comment": "Instale: npm install -g @google/gemini-cli  |  Autentique: gemini"
+    },
+    {
+      "name": "Kiro",
+      "command": "kiro-cli",
+      "args": ["chat", "{prompt}"],
+      "timeout_seconds": 90,
+      "use_stdin": false
+    },
+    {
+      "name": "Copilot",
+      "command": "copilot",
+      "args": ["-p", "{prompt}"],
+      "timeout_seconds": 90,
+      "use_stdin": false
+    }
+  ]
+}
