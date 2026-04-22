@@ -24,23 +24,32 @@ Você → ai-council → [Gemini, Kiro, Copilot] (paralelo)
 Instale os CLIs que o conselho vai usar:
 
 ```bash
+# Go (necessário para compilar)
+# https://go.dev/dl/
+
+# Node.js (necessário para instalar os CLIs via npm)
+# https://nodejs.org/
+
 # Gemini CLI
 npm install -g @google/gemini-cli
 gemini  # autentica com sua conta Google
 
-# GitHub Copilot
-gh extension install github/gh-copilot
-gh auth login
+# GitHub Copilot CLI
+npm install -g @githubnext/github-copilot-cli
+copilot login  # autentica com sua conta GitHub
 
-# Kiro (AWS)
+# Kiro CLI
 # Siga as instruções em https://kiro.dev
 ```
+
+> **WSL:** se não tiver `make`, rode `sudo apt install build-essential`
+> **macOS:** `make` já vem instalado com o Xcode Command Line Tools (`xcode-select --install`)
 
 ### 2. Compilar o ai-council
 
 ```bash
 git clone https://github.com/nickevangelista/aicouncil-cli
-cd ai-council
+cd aicouncil-cli
 
 # Baixa as dependências
 go mod tidy
@@ -65,7 +74,8 @@ ai-council ask "Qual a diferença entre mutex e channel?" --no-vote
 ai-council ask "Refatora esse código para ser mais legível" --quiet
 
 # Pipe para a área de transferência
-ai-council ask "Escreve um README para um projeto de API REST" --quiet | pbcopy
+ai-council ask "Escreve um README para um projeto de API REST" --quiet | pbcopy   # macOS
+ai-council ask "Escreve um README para um projeto de API REST" --quiet | clip.exe  # WSL
 
 # Usando config customizado
 ai-council ask "Pergunta" --config /caminho/meu-config.json
