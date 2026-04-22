@@ -35,7 +35,10 @@ npm install -g @google/gemini-cli
 gemini  # autentica com sua conta Google
 
 # GitHub Copilot CLI
-npm install -g @githubnext/github-copilot-cli
+# macOS/Linux/WSL:
+curl -fsSL https://gh.io/copilot-install | bash
+# Windows:
+winget install GitHub.Copilot
 copilot login  # autentica com sua conta GitHub
 
 # Kiro CLI
