@@ -52,20 +52,16 @@ func defaultConfig() *Config {
 				UseStdin:       false,
 			},
 			{
-				Name:    "Kiro",
-				Command: "kiro",
-				// Kiro CLI da AWS — ajuste conforme a versão instalada
-				// Instale: https://kiro.dev
-				Args:           []string{"ask", "{prompt}"},
+				Name:           "Kiro",
+				Command:        "kiro-cli",
+				Args:           []string{"chat", "{prompt}"},
 				TimeoutSeconds: 90,
 				UseStdin:       false,
 			},
 			{
-				Name:    "Copilot",
-				Command: "gh",
-				// GitHub Copilot via gh CLI
-				// Instale: gh extension install github/gh-copilot
-				Args:           []string{"copilot", "suggest", "-t", "general", "{prompt}"},
+				Name:           "Copilot",
+				Command:        "copilot",
+				Args:           []string{"-p", "{prompt}"},
 				TimeoutSeconds: 90,
 				UseStdin:       false,
 			},

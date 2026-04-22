@@ -45,11 +45,8 @@ cd ai-council
 # Baixa as dependências
 go mod tidy
 
-# Compila para o seu SO
-go build -o ai-council .
-
-# (Opcional) instala globalmente
-go install .
+# Compila e instala globalmente como "ai-council"
+make install
 ```
 
 ## Uso
