@@ -1,95 +1,95 @@
 # AI Council 🏛️
 
-> Democracia entre IAs: envia seu prompt para múltiplos assistentes, faz votação cruzada e retorna a melhor resposta.
+> AI democracy: sends your prompt to multiple assistants, runs cross-voting, and returns the best response.
 
 <img width="1434" height="781" alt="image" src="https://github.com/user-attachments/assets/ac392566-a563-498d-b3a3-ed86ce10cc85" />
 
 
-## Como funciona
+## How it works
 
 ```
-Você → ai-council → [Gemini, Kiro, Copilot] (paralelo)
-                 → cada IA julga as 3 respostas (paralelo)  
-                 → apuração por categoria
-                 → 🏆 melhor resposta
+You → ai-council → [Gemini, Kiro, Copilot] (parallel)
+                 → each AI judges all 3 responses (parallel)
+                 → tally by category
+                 → 🏆 best response
 ```
 
-**Fase 1 — Coleta:** O prompt é enviado para todos os agentes ao mesmo tempo (goroutines).
+**Phase 1 — Collection:** The prompt is sent to all agents simultaneously (goroutines).
 
-**Fase 2 — Votação cruzada:** Cada agente recebe as 3 respostas anonimizadas (A, B, C) e dá notas de 1–10 em 5 categorias: precisão, clareza, completude, praticidade e concisão.
+**Phase 2 — Cross-voting:** Each agent receives the 3 anonymized responses (A, B, C) and scores them 1–10 across 5 categories: accuracy, clarity, completeness, practicality, and conciseness.
 
-**Fase 3 — Apuração:** As notas são agregadas, o vencedor é eleito por maior pontuação total.
+**Phase 3 — Tally:** Scores are aggregated, the winner is elected by highest total.
 
-## Instalação
+## Installation
 
-### 1. Pré-requisitos
+### 1. Prerequisites
 
-Instale os CLIs que o conselho vai usar:
+Install the CLIs the council will use:
 
 ```bash
-# Go (necessário para compilar)
+# Go (required to compile)
 # https://go.dev/dl/
 
-# Node.js (necessário para instalar os CLIs via npm)
+# Node.js (required to install CLIs via npm)
 # https://nodejs.org/
 
 # Gemini CLI
 npm install -g @google/gemini-cli
-gemini  # autentica com sua conta Google
+gemini  # authenticate with your Google account
 
 # GitHub Copilot CLI
 # macOS/Linux/WSL:
 curl -fsSL https://gh.io/copilot-install | bash
 # Windows:
 winget install GitHub.Copilot
-copilot login  # autentica com sua conta GitHub
+copilot login  # authenticate with your GitHub account
 
 # Kiro CLI
-# Siga as instruções em https://kiro.dev
+# Follow the instructions at https://kiro.dev
 ```
 
-> **WSL:** se não tiver `make`, rode `sudo apt install build-essential`
-> **macOS:** `make` já vem instalado com o Xcode Command Line Tools (`xcode-select --install`)
+> **WSL:** if you don't have `make`, run `sudo apt install build-essential`
+> **macOS:** `make` comes pre-installed with Xcode Command Line Tools (`xcode-select --install`)
 
-### 2. Compilar o ai-council
+### 2. Build ai-council
 
 ```bash
 git clone https://github.com/nickevangelista/aicouncil-cli
 cd aicouncil-cli
 
-# Baixa as dependências
+# Download dependencies
 go mod tidy
 
-# Compila e instala globalmente como "ai-council"
+# Compile and install globally as "ai-council"
 make install
 ```
 
-## Uso
+## Usage
 
 ```bash
-# Pergunta básica — mostra placar + vencedor
-ai-council ask "Como fazer tratamento de erros idiomático em Go?"
+# Basic question — shows scoreboard + winner
+ai-council ask "How to do idiomatic error handling in Go?"
 
-# Com progresso detalhado
-ai-council ask "Explica o algoritmo de Dijkstra" --verbose
+# With detailed progress
+ai-council ask "Explain Dijkstra's algorithm" --verbose
 
-# Sem votação — vê todas as respostas
-ai-council ask "Qual a diferença entre mutex e channel?" --no-vote
+# No voting — see all responses
+ai-council ask "What's the difference between mutex and channel?" --no-vote
 
-# Modo silencioso — só imprime a resposta (perfeito para pipes)
-ai-council ask "Refatora esse código para ser mais legível" --quiet
+# Quiet mode — only prints the response (great for pipes)
+ai-council ask "Refactor this code to be more readable" --quiet
 
-# Pipe para a área de transferência
-ai-council ask "Escreve um README para um projeto de API REST" --quiet | pbcopy   # macOS
-ai-council ask "Escreve um README para um projeto de API REST" --quiet | clip.exe  # WSL
+# Pipe to clipboard
+ai-council ask "Write a README for a REST API project" --quiet | pbcopy   # macOS
+ai-council ask "Write a README for a REST API project" --quiet | clip.exe  # WSL
 
-# Usando config customizado
-ai-council ask "Pergunta" --config /caminho/meu-config.json
+# Using a custom config
+ai-council ask "Question" --config /path/to/my-config.json
 ```
 
-## Configuração (`config.json`)
+## Configuration (`config.json`)
 
-O `config.json` fica na mesma pasta onde você roda o comando.
+The `config.json` lives in the same folder where you run the command.
 
 ```json
 {
@@ -102,9 +102,9 @@ O `config.json` fica na mesma pasta onde você roda o comando.
       "use_stdin": false
     },
     {
-      "name": "MeuCLI",
-      "command": "meu-cli",
-      "args": ["perguntar"],
+      "name": "MyCLI",
+      "command": "my-cli",
+      "args": ["ask"],
       "timeout_seconds": 60,
       "use_stdin": true
     }
@@ -112,43 +112,43 @@ O `config.json` fica na mesma pasta onde você roda o comando.
 }
 ```
 
-| Campo | Tipo | Descrição |
+| Field | Type | Description |
 |---|---|---|
-| `name` | string | Nome amigável do agente |
-| `command` | string | Binário a executar (deve estar no `$PATH`) |
-| `args` | []string | Argumentos — use `{prompt}` como placeholder |
-| `timeout_seconds` | int | Timeout por chamada (padrão: 90) |
-| `use_stdin` | bool | Envia o prompt via stdin ao invés de args |
+| `name` | string | Friendly agent name |
+| `command` | string | Binary to execute (must be in `$PATH`) |
+| `args` | []string | Arguments — use `{prompt}` as a placeholder |
+| `timeout_seconds` | int | Timeout per call (default: 90) |
+| `use_stdin` | bool | Send the prompt via stdin instead of args |
 
-**Sem `config.json`:** usa Gemini + Kiro + Copilot com os comandos padrão.
+**Without `config.json`:** uses Gemini + Kiro + Copilot with default commands.
 
 ## Flags
 
-| Flag | Atalho | Descrição |
+| Flag | Shorthand | Description |
 |---|---|---|
-| `--config` | `-c` | Caminho para o arquivo de configuração |
-| `--verbose` | `-v` | Mostra progresso detalhado de cada fase |
-| `--no-vote` | `-n` | Exibe todas as respostas sem votação |
-| `--quiet` | `-q` | Só imprime a resposta vencedora (bom para pipes) |
+| `--config` | `-c` | Path to the config file |
+| `--verbose` | `-v` | Show detailed progress for each phase |
+| `--no-vote` | `-n` | Display all responses without voting |
+| `--quiet` | `-q` | Only prints the winning response (good for pipes) |
 
-## Estrutura do projeto
+## Project structure
 
 ```
 ai-council/
-├── main.go                 # Ponto de entrada, CLI com cobra
-├── go.mod                  # Módulo Go
-├── config.json             # Configuração dos agentes
+├── main.go                 # Entry point, CLI with cobra
+├── go.mod                  # Go module
+├── config.json             # Agent configuration
 └── internal/
-    ├── config.go           # Carregamento de configuração
-    ├── agent.go            # Struct Agent + execução do subprocess
-    ├── council.go          # Orquestração das 3 fases
-    ├── voting.go           # Prompt de julgamento, parsing JSON, apuração
-    └── display.go          # Interface no terminal (cores ANSI)
+    ├── config.go           # Configuration loading
+    ├── agent.go            # Agent struct + subprocess execution
+    ├── council.go          # Orchestration of the 3 phases
+    ├── voting.go           # Judge prompt, JSON parsing, vote tally
+    └── display.go          # Terminal UI (ANSI colors)
 ```
 
-## Adicionando novos agentes
+## Adding new agents
 
-Qualquer CLI que aceite um prompt e devolva texto funciona. Exemplos:
+Any CLI that accepts a prompt and returns text works. Examples:
 
 ```json
 {
@@ -177,11 +177,11 @@ Qualquer CLI que aceite um prompt e devolva texto funciona. Exemplos:
 }
 ```
 
-## Dependências
+## Dependencies
 
-- `github.com/spf13/cobra` — framework de CLI (amplamente usado em Go)
-- Biblioteca padrão do Go para todo o resto
+- `github.com/spf13/cobra` — CLI framework (widely used in Go)
+- Go standard library for everything else
 
-## Licença
+## License
 
 MIT

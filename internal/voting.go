@@ -8,103 +8,103 @@ import (
 	"strings"
 )
 
-// Categories são as dimensões de avaliação usadas na votação.
-// Cada juiz (agente) dá uma nota de 1 a 10 em cada categoria para cada resposta.
+// Categories are the evaluation dimensions used in voting.
+// Each judge (agent) gives a score from 1 to 10 in each category for each response.
 var Categories = []string{
-	"precisao",    // acurácia e correção factual
-	"clareza",     // facilidade de entendimento
-	"completude",  // abrangência e cobertura do tema
-	"praticidade", // utilidade e aplicabilidade prática
-	"concisao",    // brevidade e objetividade adequadas
+	"accuracy",      // factual correctness
+	"clarity",       // ease of understanding
+	"completeness",  // coverage and breadth of the topic
+	"practicality",  // usefulness and real-world applicability
+	"conciseness",   // appropriate brevity — not too short, not too verbose
 }
 
-// CategoryLabels são os labels exibidos na interface (alinhados com Categories)
+// CategoryLabels are the labels shown in the UI (aligned with Categories)
 var CategoryLabels = map[string]string{
-	"precisao":    "Precisão",
-	"clareza":     "Clareza",
-	"completude":  "Completude",
-	"praticidade": "Praticidade",
-	"concisao":    "Concisão",
+	"accuracy":     "Accuracy",
+	"clarity":      "Clarity",
+	"completeness": "Completeness",
+	"practicality": "Practicality",
+	"conciseness":  "Conciseness",
 }
 
-// Score mapeia cada categoria para uma pontuação (1–10)
+// Score maps each category to a score (1–10)
 type Score map[string]float64
 
-// JudgeResult é o resultado do julgamento de um agente como juiz.
-// Cada agente avalia TODAS as respostas, incluindo a sua própria.
+// JudgeResult is the result of an agent acting as a judge.
+// Each agent evaluates ALL responses, including its own.
 type JudgeResult struct {
-	Judge  *Agent            // qual agente está julgando
-	Scores map[string]Score  // "A" -> {precisao: 8, clareza: 9, ...}
-	Err    error             // erro de execução ou de parsing
+	Judge  *Agent            // which agent is judging
+	Scores map[string]Score  // "A" -> {accuracy: 8, clarity: 9, ...}
+	Err    error             // execution or parsing error
 }
 
-// VoteResult é o resultado final da votação, após agregar todos os juízes.
+// VoteResult is the final voting result after aggregating all judges.
 type VoteResult struct {
-	Responses    []*Response              // respostas originais (só as válidas)
-	JudgeResults []*JudgeResult           // votos de cada juiz
-	Totals       map[string]float64       // total de pontos por letra (A, B, C)
-	AvgScores    map[string]Score         // média por categoria por letra
-	Winner       *Response               // resposta vencedora
+	Responses    []*Response              // original responses (valid ones only)
+	JudgeResults []*JudgeResult           // each judge's votes
+	Totals       map[string]float64       // total points per letter (A, B, C)
+	AvgScores    map[string]Score         // average per category per letter
+	Winner       *Response               // winning response
 }
 
-// BuildJudgePrompt cria o prompt enviado a cada agente para que ele julgue as respostas.
-// As respostas são anonimizadas (A, B, C) para evitar viés de autorreferência.
+// BuildJudgePrompt creates the prompt sent to each agent to judge the responses.
+// Responses are anonymized (A, B, C) to avoid self-reference bias.
 func BuildJudgePrompt(userPrompt string, responses []*Response) string {
 	var sb strings.Builder
 
-	sb.WriteString("Você é um juiz imparcial e especialista. Sua tarefa é avaliar 3 respostas diferentes para a mesma pergunta.\n\n")
-	sb.WriteString(fmt.Sprintf("PERGUNTA ORIGINAL:\n%s\n\n", userPrompt))
+	sb.WriteString("You are an impartial expert judge. Your task is to evaluate 3 different responses to the same question.\n\n")
+	sb.WriteString(fmt.Sprintf("ORIGINAL QUESTION:\n%s\n\n", userPrompt))
 	sb.WriteString(strings.Repeat("─", 60) + "\n\n")
 
 	for _, r := range responses {
-		sb.WriteString(fmt.Sprintf("RESPOSTA %s:\n", r.Letter))
+		sb.WriteString(fmt.Sprintf("RESPONSE %s:\n", r.Letter))
 		sb.WriteString(r.Content)
 		sb.WriteString("\n\n" + strings.Repeat("─", 60) + "\n\n")
 	}
 
-	sb.WriteString("INSTRUÇÕES DE AVALIAÇÃO:\n")
-	sb.WriteString("Dê uma nota de 1 a 10 para cada resposta nas categorias abaixo:\n")
-	sb.WriteString("  - precisao:    acurácia e correção dos fatos apresentados\n")
-	sb.WriteString("  - clareza:     facilidade de entendimento e estrutura\n")
-	sb.WriteString("  - completude:  abrangência — cobre todos os aspectos relevantes?\n")
-	sb.WriteString("  - praticidade: é acionável e útil na prática?\n")
-	sb.WriteString("  - concisao:    brevidade adequada — nem curta demais, nem verbosa\n\n")
+	sb.WriteString("EVALUATION INSTRUCTIONS:\n")
+	sb.WriteString("Give a score from 1 to 10 for each response in the categories below:\n")
+	sb.WriteString("  - accuracy:     factual correctness of the information presented\n")
+	sb.WriteString("  - clarity:      ease of understanding and structure\n")
+	sb.WriteString("  - completeness: coverage — does it address all relevant aspects?\n")
+	sb.WriteString("  - practicality: is it actionable and useful in practice?\n")
+	sb.WriteString("  - conciseness:  appropriate brevity — not too short, not too verbose\n\n")
 
-	sb.WriteString("FORMATO OBRIGATÓRIO DA RESPOSTA:\n")
-	sb.WriteString("Retorne APENAS um objeto JSON válido — sem texto antes, sem texto depois,\n")
-	sb.WriteString("sem blocos de código markdown (sem ```), sem explicações. Só o JSON:\n\n")
+	sb.WriteString("REQUIRED RESPONSE FORMAT:\n")
+	sb.WriteString("Return ONLY a valid JSON object — no text before, no text after,\n")
+	sb.WriteString("no markdown code blocks (no ```), no explanations. Just the JSON:\n\n")
 
-	// Exemplo de saída esperada para guiar o modelo
-	sb.WriteString(`{"A":{"precisao":8,"clareza":9,"completude":7,"praticidade":8,"concisao":7},`)
-	sb.WriteString(`"B":{"precisao":7,"clareza":8,"completude":9,"praticidade":7,"concisao":8},`)
-	sb.WriteString(`"C":{"precisao":9,"clareza":7,"completude":8,"praticidade":9,"concisao":6}}`)
+	// Example of expected output to guide the model
+	sb.WriteString(`{"A":{"accuracy":8,"clarity":9,"completeness":7,"practicality":8,"conciseness":7},`)
+	sb.WriteString(`"B":{"accuracy":7,"clarity":8,"completeness":9,"practicality":7,"conciseness":8},`)
+	sb.WriteString(`"C":{"accuracy":9,"clarity":7,"completeness":8,"practicality":9,"conciseness":6}}`)
 	sb.WriteString("\n")
 
 	return sb.String()
 }
 
-// ParseJudgeResponse extrai as pontuações de uma resposta de julgamento.
-// É tolerante a erros: tenta limpar markdown, encontrar JSON embutido em texto, etc.
+// ParseJudgeResponse extracts scores from a judge response.
+// It's error-tolerant: tries to strip markdown, find embedded JSON in text, etc.
 func ParseJudgeResponse(content string) (map[string]Score, error) {
 	content = strings.TrimSpace(content)
 
-	// Remove blocos de código markdown que alguns modelos insistem em usar
+	// Remove markdown code blocks that some models insist on using
 	// Ex: ```json { ... } ```
 	content = regexp.MustCompile("(?s)```[a-z]*\n?(.*?)\n?```").ReplaceAllString(content, "$1")
 	content = strings.TrimSpace(content)
 
-	// Estratégia 1: tenta parsear o conteúdo inteiro como JSON
+	// Strategy 1: try to parse the entire content as JSON
 	var scores map[string]Score
 	if err := json.Unmarshal([]byte(content), &scores); err == nil && isValidScoreMap(scores) {
 		return scores, nil
 	}
 
-	// Estratégia 2: procura qualquer objeto JSON válido no texto
-	// Útil quando o modelo adiciona texto antes/depois do JSON
+	// Strategy 2: look for any valid JSON object in the text
+	// Useful when the model adds text before/after the JSON
 	jsonRegex := regexp.MustCompile(`\{[\s\S]+\}`)
 	matches := jsonRegex.FindAllString(content, -1)
 
-	// Ordena por tamanho decrescente — o maior match é provavelmente o mais completo
+	// Sort by descending length — the largest match is likely the most complete
 	sort.Slice(matches, func(i, j int) bool {
 		return len(matches[i]) > len(matches[j])
 	})
@@ -115,11 +115,11 @@ func ParseJudgeResponse(content string) (map[string]Score, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("não foi possível extrair pontuações válidas da resposta do juiz")
+	return nil, fmt.Errorf("could not extract valid scores from judge response")
 }
 
-// isValidScoreMap verifica se o mapa de scores tem a estrutura esperada:
-// deve ter pelo menos uma chave "A", "B" ou "C" com categorias dentro.
+// isValidScoreMap checks if the score map has the expected structure:
+// must have at least one key "A", "B", or "C" with categories inside.
 func isValidScoreMap(scores map[string]Score) bool {
 	if len(scores) == 0 {
 		return false
@@ -132,8 +132,8 @@ func isValidScoreMap(scores map[string]Score) bool {
 	return false
 }
 
-// TallyVotes agrega os votos de todos os juízes e determina o vencedor.
-// Cada juiz tem peso igual — a média das notas de todos os juízes é usada.
+// TallyVotes aggregates votes from all judges and determines the winner.
+// Each judge has equal weight — the average of all judges' scores is used.
 func TallyVotes(responses []*Response, judgeResults []*JudgeResult) *VoteResult {
 	result := &VoteResult{
 		Responses:    responses,
@@ -142,9 +142,9 @@ func TallyVotes(responses []*Response, judgeResults []*JudgeResult) *VoteResult 
 		AvgScores:    make(map[string]Score),
 	}
 
-	// Inicializa acumuladores para calcular médias depois
-	rawSums := make(map[string]Score)   // letra -> {categoria -> soma}
-	counts := make(map[string]map[string]int) // letra -> {categoria -> n}
+	// Initialize accumulators to calculate averages later
+	rawSums := make(map[string]Score)          // letter -> {category -> sum}
+	counts := make(map[string]map[string]int)  // letter -> {category -> n}
 
 	for _, r := range responses {
 		rawSums[r.Letter] = make(Score)
@@ -152,20 +152,20 @@ func TallyVotes(responses []*Response, judgeResults []*JudgeResult) *VoteResult 
 		result.AvgScores[r.Letter] = make(Score)
 	}
 
-	// Agrega as notas de cada juiz
+	// Aggregate scores from each judge
 	validJudges := 0
 	for _, jr := range judgeResults {
 		if jr == nil || jr.Err != nil || jr.Scores == nil {
-			continue // ignora juízes que falharam
+			continue // skip judges that failed
 		}
 		validJudges++
 
 		for letter, categoryScores := range jr.Scores {
 			if _, exists := rawSums[letter]; !exists {
-				continue // letra desconhecida — ignora
+				continue // unknown letter — skip
 			}
 			for cat, score := range categoryScores {
-				// Garante que a nota está no intervalo válido (1–10)
+				// Ensure score is within valid range (1–10)
 				if score < 1 {
 					score = 1
 				}
@@ -179,11 +179,11 @@ func TallyVotes(responses []*Response, judgeResults []*JudgeResult) *VoteResult 
 	}
 
 	if validJudges == 0 {
-		// Nenhum juiz funcionou — retorna sem vencedor
+		// No judge worked — return without a winner
 		return result
 	}
 
-	// Calcula médias e totais finais
+	// Calculate averages and final totals
 	for _, r := range responses {
 		var total float64
 		for _, cat := range Categories {
@@ -198,7 +198,7 @@ func TallyVotes(responses []*Response, judgeResults []*JudgeResult) *VoteResult 
 		result.Totals[r.Letter] = total
 	}
 
-	// Determina o vencedor: maior total de pontos
+	// Determine the winner: highest total points
 	var maxTotal float64
 	var winnerLetter string
 	for letter, total := range result.Totals {
@@ -208,7 +208,7 @@ func TallyVotes(responses []*Response, judgeResults []*JudgeResult) *VoteResult 
 		}
 	}
 
-	// Mapeia a letra de volta para a Response original
+	// Map the letter back to the original Response
 	for _, r := range responses {
 		if r.Letter == winnerLetter {
 			result.Winner = r

@@ -9,50 +9,50 @@ import (
 )
 
 func main() {
-	// rootCmd é o comando raiz do CLI — aparece quando o usuário roda `ai-council` sem subcomandos
+	// rootCmd is the root CLI command — shown when the user runs `ai-council` with no subcommands
 	rootCmd := &cobra.Command{
 		Use:   "ai-council",
-		Short: "Conselho democrático de IAs para eleger a melhor resposta",
+		Short: "Democratic AI council to elect the best response",
 		Long: `
 ╔═══════════════════════════════════════════╗
 ║           AI COUNCIL — v1.0               ║
-║  Democracia entre inteligências artificiais║
+║     Democracy among artificial minds      ║
 ╚═══════════════════════════════════════════╝
 
-ai-council envia seu prompt para múltiplos assistentes de IA (Gemini, Kiro,
-Copilot), coleta as respostas e usa votação democrática cruzada para eleger
-a melhor resposta com base em categorias como precisão, clareza e praticidade.
+ai-council sends your prompt to multiple AI assistants (Gemini, Kiro,
+Copilot), collects their responses, and uses democratic cross-voting to elect
+the best answer based on categories like accuracy, clarity, and practicality.
 
-Exemplos:
-  ai-council ask "Como fazer uma API REST em Go?"
-  ai-council ask "Explica recursão com exemplo" --verbose
-  ai-council ask "Refatora esse código" --no-vote
-  ai-council ask "Qual a diferença entre mutex e channel?" | pbcopy
+Examples:
+  ai-council ask "How to do idiomatic error handling in Go?"
+  ai-council ask "Explain recursion with an example" --verbose
+  ai-council ask "Refactor this code" --no-vote
+  ai-council ask "What's the difference between mutex and channel?" | pbcopy
 `,
 	}
 
-	// askCmd é o subcomando principal: envia uma pergunta ao conselho
+	// askCmd is the main subcommand: sends a question to the council
 	askCmd := &cobra.Command{
-		Use:   "ask [pergunta]",
-		Short: "Faz uma pergunta ao conselho de IAs",
-		Args:  cobra.ExactArgs(1), // exige exatamente 1 argumento: a pergunta
+		Use:   "ask [question]",
+		Short: "Ask a question to the AI council",
+		Args:  cobra.ExactArgs(1), // requires exactly 1 argument: the question
 		RunE: func(cmd *cobra.Command, args []string) error {
 			prompt := args[0]
 
-			// Lê as flags
+			// Read flags
 			configPath, _ := cmd.Flags().GetString("config")
 			noVote, _ := cmd.Flags().GetBool("no-vote")
 			verbose, _ := cmd.Flags().GetBool("verbose")
 			quiet, _ := cmd.Flags().GetBool("quiet")
 
-			// Cria o conselho a partir do arquivo de configuração
+			// Create the council from the config file
 			council, err := internal.NewCouncil(configPath)
 			if err != nil {
-				return fmt.Errorf("erro ao carregar configuração: %w", err)
+				return fmt.Errorf("failed to load config: %w", err)
 			}
 
-			// Modo silencioso: sem animações, só imprime a resposta final no stdout
-			// Útil para pipes: ai-council ask "..." --quiet | pbcopy
+			// Quiet mode: no animations, just prints the final answer to stdout
+			// Useful for pipes: ai-council ask "..." --quiet | pbcopy
 			if quiet {
 				result, err := council.Deliberate(prompt, false)
 				if err != nil {
@@ -64,17 +64,17 @@ Exemplos:
 				return nil
 			}
 
-			// Modo normal: mostra progresso e resultado bonito
+			// Normal mode: shows progress and pretty result
 			result, err := council.Deliberate(prompt, verbose)
 			if err != nil {
-				return fmt.Errorf("erro na deliberação: %w", err)
+				return fmt.Errorf("deliberation failed: %w", err)
 			}
 
 			if noVote {
-				// Sem votação: mostra todas as respostas lado a lado
+				// No vote: shows all responses side by side
 				internal.DisplayAllResponses(result)
 			} else {
-				// Com votação: mostra placar e vencedor
+				// With vote: shows scoreboard and winner
 				internal.DisplayResults(result)
 			}
 
@@ -82,16 +82,16 @@ Exemplos:
 		},
 	}
 
-	// Flags do subcomando ask
-	askCmd.Flags().StringP("config", "c", "config.json", "caminho para o arquivo de configuração")
-	askCmd.Flags().BoolP("no-vote", "n", false, "mostra todas as respostas sem realizar votação")
-	askCmd.Flags().BoolP("verbose", "v", false, "mostra progresso detalhado de cada fase")
-	askCmd.Flags().BoolP("quiet", "q", false, "modo silencioso: só imprime a resposta vencedora (bom para pipes)")
+	// Flags for the ask subcommand
+	askCmd.Flags().StringP("config", "c", "config.json", "path to the config file")
+	askCmd.Flags().BoolP("no-vote", "n", false, "show all responses without voting")
+	askCmd.Flags().BoolP("verbose", "v", false, "show detailed progress for each phase")
+	askCmd.Flags().BoolP("quiet", "q", false, "quiet mode: only prints the winning response (good for pipes)")
 
-	// Registra o subcomando
+	// Register the subcommand
 	rootCmd.AddCommand(askCmd)
 
-	// Executa — o cobra cuida de erros de uso (flags inválidas, args faltando, etc.)
+	// Execute — cobra handles usage errors (invalid flags, missing args, etc.)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

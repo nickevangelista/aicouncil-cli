@@ -6,47 +6,47 @@ import (
 	"os"
 )
 
-// Config é a configuração completa do conselho, lida do config.json
+// Config is the full council configuration, read from config.json
 type Config struct {
 	Agents []*Agent `json:"agents"`
 }
 
-// LoadConfig carrega a configuração de um arquivo JSON.
-// Se o arquivo não existir, retorna a configuração padrão com os 3 agentes pré-configurados.
+// LoadConfig loads the configuration from a JSON file.
+// If the file doesn't exist, returns the default config with the 3 pre-configured agents.
 func LoadConfig(path string) (*Config, error) {
-	// Verifica se o arquivo existe
+	// Check if the file exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// Sem config.json → usa os valores padrão
+		// No config.json → use defaults
 		return defaultConfig(), nil
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao ler %s: %w", path, err)
+		return nil, fmt.Errorf("failed to read %s: %w", path, err)
 	}
 
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("config.json inválido: %w", err)
+		return nil, fmt.Errorf("invalid config.json: %w", err)
 	}
 
 	if len(cfg.Agents) == 0 {
-		return nil, fmt.Errorf("config.json não tem nenhum agente definido")
+		return nil, fmt.Errorf("config.json has no agents defined")
 	}
 
 	return &cfg, nil
 }
 
-// defaultConfig retorna a configuração padrão com Gemini, Kiro e Copilot.
-// Ajuste os campos Command/Args conforme o seu ambiente.
+// defaultConfig returns the default configuration with Gemini, Kiro, and Copilot.
+// Adjust the Command/Args fields to match your environment.
 func defaultConfig() *Config {
 	return &Config{
 		Agents: []*Agent{
 			{
 				Name:    "Gemini",
 				Command: "gemini",
-				// gemini-cli aceita o prompt como argumento com a flag -p
-				// Instale: npm install -g @google/gemini-cli
+				// gemini-cli accepts the prompt as an argument with the -p flag
+				// Install: npm install -g @google/gemini-cli
 				Args:           []string{"-p", "{prompt}"},
 				TimeoutSeconds: 90,
 				UseStdin:       false,

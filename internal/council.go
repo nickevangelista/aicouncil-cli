@@ -5,12 +5,12 @@ import (
 	"sync"
 )
 
-// Council é o conselho democrático: orquestra agentes, coleta respostas e conduz a votação.
+// Council is the democratic council: orchestrates agents, collects responses, and conducts voting.
 type Council struct {
 	Config *Config
 }
 
-// NewCouncil cria um conselho a partir de um arquivo de configuração.
+// NewCouncil creates a council from a config file.
 func NewCouncil(configPath string) (*Council, error) {
 	cfg, err := LoadConfig(configPath)
 	if err != nil {
@@ -19,38 +19,38 @@ func NewCouncil(configPath string) (*Council, error) {
 	return &Council{Config: cfg}, nil
 }
 
-// DeliberationResult contém tudo que aconteceu durante uma deliberação.
+// DeliberationResult holds everything that happened during a deliberation.
 type DeliberationResult struct {
-	Prompt     string         // pergunta original do usuário
-	Responses  []*Response    // todas as respostas (incluindo as com erro)
-	VoteResult *VoteResult    // resultado da votação (nil se --no-vote)
-	Winner     *Response      // resposta vencedora
+	Prompt     string      // original user question
+	Responses  []*Response // all responses (including ones with errors)
+	VoteResult *VoteResult // voting result (nil if --no-vote)
+	Winner     *Response   // winning response
 }
 
-// Deliberate é o método principal: executa as 3 fases do conselho.
+// Deliberate is the main method: runs the 3 phases of the council.
 //
-// Fase 1 — Coleta: envia o prompt para todos os agentes em paralelo.
-// Fase 2 — Votação: cada agente julga todas as respostas (também em paralelo).
-// Fase 3 — Apuração: agrega os votos e determina o vencedor.
+// Phase 1 — Collection: sends the prompt to all agents in parallel.
+// Phase 2 — Voting: each agent judges all responses (also in parallel).
+// Phase 3 — Tally: aggregates votes and determines the winner.
 func (c *Council) Deliberate(prompt string, verbose bool) (*DeliberationResult, error) {
 	agents := c.Config.Agents
 	if len(agents) == 0 {
-		return nil, fmt.Errorf("nenhum agente configurado — verifique o config.json")
+		return nil, fmt.Errorf("no agents configured — check your config.json")
 	}
 
 	// ══════════════════════════════════════════
-	// FASE 1: Coleta de respostas (em paralelo)
+	// PHASE 1: Collect responses (in parallel)
 	// ══════════════════════════════════════════
-	PrintPhase(1, "Consultando agentes", verbose)
+	PrintPhase(1, "Consulting agents", verbose)
 
-	// Cria o slice de respostas com o tamanho exato para acesso concorrente seguro
-	// (cada goroutine escreve em seu próprio índice → não precisa de mutex)
+	// Create the responses slice with exact size for safe concurrent access
+	// (each goroutine writes to its own index → no mutex needed)
 	responses := make([]*Response, len(agents))
 	var wg sync.WaitGroup
 
 	for i, agent := range agents {
 		wg.Add(1)
-		// Captura i e agent no loop — necessário em Go < 1.22 (boa prática geral)
+		// Capture i and agent in the loop — required in Go < 1.22 (good practice in general)
 		go func(idx int, a *Agent) {
 			defer wg.Done()
 
@@ -66,9 +66,9 @@ func (c *Council) Deliberate(prompt string, verbose bool) (*DeliberationResult, 
 		}(i, agent)
 	}
 
-	wg.Wait() // aguarda todos os agentes terminarem
+	wg.Wait() // wait for all agents to finish
 
-	// Atribui letras (A, B, C...) e separa as respostas válidas
+	// Assign letters (A, B, C...) and separate valid responses
 	letters := []string{"A", "B", "C", "D", "E"}
 	var validResponses []*Response
 
@@ -85,10 +85,10 @@ func (c *Council) Deliberate(prompt string, verbose bool) (*DeliberationResult, 
 	}
 
 	if len(validResponses) == 0 {
-		return nil, fmt.Errorf("todos os agentes falharam — verifique se os CLIs estão instalados e configurados")
+		return nil, fmt.Errorf("all agents failed — check if the CLIs are installed and configured")
 	}
 
-	// Com apenas 1 agente funcionando não há o que votar
+	// With only 1 agent working there's nothing to vote on
 	if len(validResponses) == 1 {
 		PrintSingleWinner(validResponses[0].Agent.Name, verbose)
 		return &DeliberationResult{
@@ -99,11 +99,11 @@ func (c *Council) Deliberate(prompt string, verbose bool) (*DeliberationResult, 
 	}
 
 	// ══════════════════════════════════════════
-	// FASE 2: Votação cruzada (em paralelo)
+	// PHASE 2: Cross-voting (in parallel)
 	// ══════════════════════════════════════════
-	PrintPhase(2, fmt.Sprintf("Votação cruzada (%d juízes)", len(agents)), verbose)
+	PrintPhase(2, fmt.Sprintf("Cross-voting (%d judges)", len(agents)), verbose)
 
-	// Cria o prompt de julgamento (igual para todos os juízes)
+	// Build the judge prompt (same for all judges)
 	judgePrompt := BuildJudgePrompt(prompt, validResponses)
 
 	judgeResults := make([]*JudgeResult, len(agents))
@@ -113,25 +113,25 @@ func (c *Council) Deliberate(prompt string, verbose bool) (*DeliberationResult, 
 		go func(idx int, a *Agent) {
 			defer wg.Done()
 
-			PrintAgentWorking(a.Name+" (juiz)", verbose)
+			PrintAgentWorking(a.Name+" (judge)", verbose)
 
-			// Reutiliza o método Ask — o judgePrompt é tratado como qualquer outro prompt
+			// Reuse the Ask method — the judgePrompt is treated like any other prompt
 			resp := a.Ask(judgePrompt)
 
 			jr := &JudgeResult{Judge: a}
 
 			if resp.Err != nil {
 				jr.Err = resp.Err
-				PrintAgentError(a.Name+" (juiz)", resp.Err, verbose)
+				PrintAgentError(a.Name+" (judge)", resp.Err, verbose)
 			} else {
-				// Tenta extrair as pontuações do JSON retornado
+				// Try to extract scores from the returned JSON
 				scores, err := ParseJudgeResponse(resp.Content)
 				if err != nil {
-					jr.Err = fmt.Errorf("parsing falhou para %s: %w", a.Name, err)
-					PrintAgentError(a.Name+" (juiz)", jr.Err, verbose)
+					jr.Err = fmt.Errorf("parsing failed for %s: %w", a.Name, err)
+					PrintAgentError(a.Name+" (judge)", jr.Err, verbose)
 				} else {
 					jr.Scores = scores
-					PrintAgentDone(a.Name+" (juiz)", verbose)
+					PrintAgentDone(a.Name+" (judge)", verbose)
 				}
 			}
 
@@ -142,9 +142,9 @@ func (c *Council) Deliberate(prompt string, verbose bool) (*DeliberationResult, 
 	wg.Wait()
 
 	// ══════════════════════════════════════════
-	// FASE 3: Apuração dos votos
+	// PHASE 3: Vote tally
 	// ══════════════════════════════════════════
-	PrintPhase(3, "Apuração", verbose)
+	PrintPhase(3, "Tallying votes", verbose)
 
 	voteResult := TallyVotes(validResponses, judgeResults)
 

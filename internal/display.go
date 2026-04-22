@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-// ─── Códigos ANSI para cores no terminal ───────────────────────────────────────
-// Go não tem uma lib de cores na stdlib, mas códigos ANSI funcionam em
-// qualquer terminal moderno (macOS Terminal, iTerm, VS Code, Linux, etc.)
+// ─── ANSI color codes for terminal output ─────────────────────────────────────
+// Go has no color library in stdlib, but ANSI codes work in
+// any modern terminal (macOS Terminal, iTerm, VS Code, Linux, etc.)
 const (
 	ansiReset  = "\033[0m"
 	ansiBold   = "\033[1m"
@@ -20,19 +20,19 @@ const (
 	ansiCyan   = "\033[36m"
 )
 
-// Cores por agente (A=azul, B=roxo, C=amarelo)
+// Colors per agent (A=blue, B=purple, C=yellow)
 var agentColors = []string{ansiBlue, ansiPurple, ansiYellow}
 
-// ─── Funções de progresso (usadas durante a execução) ──────────────────────────
+// ─── Progress functions (used during execution) ────────────────────────────────
 
-// PrintPhase exibe o cabeçalho de uma fase (só no modo verbose)
+// PrintPhase displays the header for a phase (only in verbose mode)
 func PrintPhase(n int, name string, verbose bool) {
 	if !verbose {
-		// Modo normal: exibe uma linha de progresso simples
-		fmt.Printf("%s⟳ Fase %d: %s...%s\n", ansiCyan, n, name, ansiReset)
+		// Normal mode: display a simple progress line
+		fmt.Printf("%s⟳ Phase %d: %s...%s\n", ansiCyan, n, name, ansiReset)
 		return
 	}
-	fmt.Printf("\n%s%s FASE %d — %s %s%s\n",
+	fmt.Printf("\n%s%s PHASE %d — %s %s%s\n",
 		ansiBold+ansiCyan,
 		strings.Repeat("─", 3),
 		n, name,
@@ -41,39 +41,39 @@ func PrintPhase(n int, name string, verbose bool) {
 	)
 }
 
-// PrintAgentWorking exibe que um agente está trabalhando
+// PrintAgentWorking displays that an agent is working
 func PrintAgentWorking(name string, verbose bool) {
 	if verbose {
 		fmt.Printf("  %s○ %s...%s\n", ansiDim, name, ansiReset)
 	}
 }
 
-// PrintAgentDone exibe confirmação de que um agente terminou com sucesso
+// PrintAgentDone displays confirmation that an agent finished successfully
 func PrintAgentDone(name string, verbose bool) {
 	if verbose {
 		fmt.Printf("  %s✓ %s%s\n", ansiGreen, name, ansiReset)
 	}
 }
 
-// PrintAgentError exibe um erro de agente
+// PrintAgentError displays an agent error
 func PrintAgentError(name string, err error, verbose bool) {
-	// Erros sempre aparecem, independente do verbose
+	// Errors always show, regardless of verbose
 	fmt.Printf("  %s✗ %s: %s%s\n", ansiRed, name, err.Error(), ansiReset)
 }
 
-// PrintSingleWinner avisa quando só um agente funcionou
+// PrintSingleWinner warns when only one agent responded
 func PrintSingleWinner(name string, verbose bool) {
-	fmt.Printf("%s⚠ Só %s respondeu — retornando resposta única (sem votação)%s\n",
+	fmt.Printf("%s⚠ Only %s responded — returning single response (no voting)%s\n",
 		ansiYellow, name, ansiReset)
 }
 
-// ─── Funções de resultado ──────────────────────────────────────────────────────
+// ─── Result functions ──────────────────────────────────────────────────────────
 
-// DisplayResults exibe o placar de votação + resposta vencedora
+// DisplayResults shows the voting scoreboard + winning response
 func DisplayResults(result *DeliberationResult) {
-	// Mostra as respostas de cada agente (resumidas)
+	// Show each agent's response (summarized)
 	printSeparator()
-	fmt.Printf("%s%s RESPOSTAS DO CONSELHO %s%s\n",
+	fmt.Printf("%s%s COUNCIL RESPONSES %s%s\n",
 		ansiBold+ansiCyan, strings.Repeat("═", 3), strings.Repeat("═", 3), ansiReset)
 
 	for i, r := range result.Responses {
@@ -86,19 +86,19 @@ func DisplayResults(result *DeliberationResult) {
 		fmt.Printf("%s%s%s\n", ansiDim, preview, ansiReset)
 	}
 
-	// Mostra o placar se houver votação
+	// Show scoreboard if there was voting
 	if result.VoteResult != nil && len(result.VoteResult.Totals) > 0 {
 		printVotingBoard(result.VoteResult)
 	}
 
-	// Mostra o vencedor e a resposta completa
+	// Show winner and full response
 	printWinnerResponse(result)
 }
 
-// DisplayAllResponses exibe todas as respostas sem votação (modo --no-vote)
+// DisplayAllResponses shows all responses without voting (--no-vote mode)
 func DisplayAllResponses(result *DeliberationResult) {
 	printSeparator()
-	fmt.Printf("%s%s TODAS AS RESPOSTAS (sem votação) %s%s\n",
+	fmt.Printf("%s%s ALL RESPONSES (no voting) %s%s\n",
 		ansiBold+ansiCyan, strings.Repeat("═", 3), strings.Repeat("═", 3), ansiReset)
 
 	for i, r := range result.Responses {
@@ -108,7 +108,7 @@ func DisplayAllResponses(result *DeliberationResult) {
 		color := agentColors[i%len(agentColors)]
 		fmt.Printf("\n%s%s── [%s] %s ──%s\n", ansiBold+color, "", r.Letter, r.Agent.Name, ansiReset)
 		if r.Err != nil {
-			fmt.Printf("%s✗ Erro: %s%s\n", ansiRed, r.Err.Error(), ansiReset)
+			fmt.Printf("%s✗ Error: %s%s\n", ansiRed, r.Err.Error(), ansiReset)
 		} else {
 			fmt.Println(r.Content)
 		}
@@ -116,13 +116,13 @@ func DisplayAllResponses(result *DeliberationResult) {
 	printSeparator()
 }
 
-// printVotingBoard exibe a tabela de votos no terminal
+// printVotingBoard displays the voting table in the terminal
 func printVotingBoard(vr *VoteResult) {
 	printSeparator()
-	fmt.Printf("\n%s%s PLACAR DE VOTAÇÃO %s%s\n",
+	fmt.Printf("\n%s%s VOTING SCOREBOARD %s%s\n",
 		ansiBold+ansiCyan, strings.Repeat("═", 3), strings.Repeat("═", 3), ansiReset)
 
-	// Cabeçalho da tabela
+	// Table header
 	fmt.Printf("\n%-14s", "")
 	for i, r := range vr.Responses {
 		color := agentColors[i%len(agentColors)]
@@ -132,7 +132,7 @@ func printVotingBoard(vr *VoteResult) {
 	fmt.Println()
 	fmt.Println(strings.Repeat("─", 14+20*len(vr.Responses)))
 
-	// Linhas por categoria
+	// Rows per category
 	for _, cat := range Categories {
 		label := CategoryLabels[cat]
 		fmt.Printf("%-14s", label)
@@ -146,7 +146,7 @@ func printVotingBoard(vr *VoteResult) {
 
 	fmt.Println(strings.Repeat("─", 14+20*len(vr.Responses)))
 
-	// Linha de totais
+	// Totals row
 	fmt.Printf("%s%-14s%s", ansiBold, "TOTAL", ansiReset)
 	for i, r := range vr.Responses {
 		total := vr.Totals[r.Letter]
@@ -156,23 +156,23 @@ func printVotingBoard(vr *VoteResult) {
 	fmt.Println()
 }
 
-// printWinnerResponse exibe a resposta vencedora completa
+// printWinnerResponse displays the full winning response
 func printWinnerResponse(result *DeliberationResult) {
 	printSeparator()
 
 	if result.Winner == nil {
-		fmt.Printf("%s✗ Não foi possível determinar um vencedor%s\n", ansiRed, ansiReset)
+		fmt.Printf("%s✗ Could not determine a winner%s\n", ansiRed, ansiReset)
 		return
 	}
 
-	// Banner do vencedor
+	// Winner banner
 	pts := ""
 	if result.VoteResult != nil {
 		total := result.VoteResult.Totals[result.Winner.Letter]
-		pts = fmt.Sprintf(" — %.1f pontos", total)
+		pts = fmt.Sprintf(" — %.1f points", total)
 	}
 
-	fmt.Printf("\n%s%s 🏆 VENCEDOR: %s%s%s\n",
+	fmt.Printf("\n%s%s 🏆 WINNER: %s%s%s\n",
 		ansiBold+ansiGreen,
 		strings.Repeat("═", 3),
 		result.Winner.Agent.Name,
@@ -180,14 +180,14 @@ func printWinnerResponse(result *DeliberationResult) {
 		ansiReset,
 	)
 	fmt.Println()
-	// Resposta completa (essa é a parte que vai para o stdout para pipes)
+	// Full response (this is the part that goes to stdout for pipes)
 	fmt.Println(result.Winner.Content)
 	printSeparator()
 }
 
-// ─── Funções auxiliares ────────────────────────────────────────────────────────
+// ─── Helper functions ──────────────────────────────────────────────────────────
 
-// buildBar constrói uma barra visual de pontuação
+// buildBar builds a visual score bar
 // Ex: score=7.5, max=10, width=5 → "████░ 7.5"
 func buildBar(score, max float64, width int) string {
 	if max <= 0 {
@@ -203,7 +203,7 @@ func buildBar(score, max float64, width int) string {
 	filled := int(ratio * float64(width))
 	bar := strings.Repeat("█", filled) + strings.Repeat("░", width-filled)
 
-	// Cor baseada na pontuação
+	// Color based on score
 	var color string
 	switch {
 	case score >= 8:
@@ -217,9 +217,9 @@ func buildBar(score, max float64, width int) string {
 	return fmt.Sprintf("%s%s%s %.1f", color, bar, ansiReset, score)
 }
 
-// truncate corta um texto em n caracteres e adiciona "..." se necessário
+// truncate cuts text at n characters and adds "..." if needed
 func truncate(s string, n int) string {
-	// Remove linhas extras para o preview
+	// Remove extra lines for the preview
 	lines := strings.Split(strings.TrimSpace(s), "\n")
 	flat := strings.Join(lines[:min(5, len(lines))], " ↵ ")
 
@@ -229,12 +229,12 @@ func truncate(s string, n int) string {
 	return flat[:n] + "..."
 }
 
-// printSeparator exibe uma linha divisória
+// printSeparator displays a divider line
 func printSeparator() {
 	fmt.Printf("%s%s%s\n", ansiDim, strings.Repeat("─", 60), ansiReset)
 }
 
-// min retorna o menor de dois inteiros (disponível nativamente em Go 1.21+)
+// min returns the smaller of two integers (available natively in Go 1.21+)
 func min(a, b int) int {
 	if a < b {
 		return a
