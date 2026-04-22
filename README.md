@@ -2,7 +2,8 @@
 
 > AI democracy: sends your prompt to multiple assistants, runs cross-voting, and returns the best response.
 
-<img width="1440" height="795" alt="image" src="https://github.com/user-attachments/assets/9585c7cf-0f15-484f-ac8f-aa844ae8d2f7" />
+<img width="1442" height="798" alt="image" src="https://github.com/user-attachments/assets/f539e738-79f0-4467-825c-81eb077b96e3" />
+
 
 
 
