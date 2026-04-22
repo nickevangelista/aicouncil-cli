@@ -2,6 +2,9 @@
 
 > Democracia entre IAs: envia seu prompt para múltiplos assistentes, faz votação cruzada e retorna a melhor resposta.
 
+> <img width="1434" height="781" alt="image" src="https://github.com/user-attachments/assets/ac392566-a563-498d-b3a3-ed86ce10cc85" />
+
+
 ## Como funciona
 
 ```
